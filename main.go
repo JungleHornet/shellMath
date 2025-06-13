@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/junglehornet/shellMath/interpreter"
+	"github.com/lunixbochs/vtclean"
 	"golang.org/x/term"
 	"math"
 	"os"
@@ -27,11 +29,13 @@ func quit(scanner *bufio.Scanner) {
 }
 
 func main() {
+	errText := color.New(color.FgRed).Add(color.Bold).SprintFunc()
+
 	width, _, err := term.GetSize(int(os.Stdin.Fd()))
 	if err != nil || width <= 0 {
-		fmt.Println(errors.New("error getting terminal size: "))
-		fmt.Println(err)
-		fmt.Println("Defaulting to terminal width of 40 characters\n")
+		fmt.Println(errors.New(errText("error getting terminal size: ")))
+		fmt.Println(errText(err))
+		fmt.Println(errText("Defaulting to terminal width of 40 characters.\n"))
 		width = 40
 	}
 
@@ -49,26 +53,53 @@ func main() {
 	fmt.Println(strings.Repeat("=", width))
 
 	scanner := bufio.NewScanner(os.Stdin)
+	var ans float64
+	noAns := true
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line == "q" {
 			quit(scanner)
 		} else {
+			first, _ := utf8.DecodeRuneInString(line)
+			if interpreter.IsOperatorRune(first) {
+				line = "ans" + line
+			}
+
+			var output string
+
+			ansErr := false
+			if strings.Contains(line, "ans") {
+				if !noAns {
+					line = strings.Replace(line, "ans", strconv.FormatFloat(ans, 'f', -1, 64), -1)
+				} else {
+					output = errText("Error: cannot use ans as there is no valid answer to use")
+					ansErr = true
+				}
+			}
 			res, err := interpreter.Evaluate(line)
-			if err != nil {
-				fmt.Println("Error:", err)
-				continue
+			if err != nil || ansErr {
+				if !ansErr {
+					output = errText("Error: ", err)
+				}
+				noAns = true
 			} else {
 				var resStr string
+
+				noAns = false
+				ans = res
 				if x := int(math.Round(res)); float64(x) == res {
 					resStr = strconv.Itoa(x)
 				} else {
 					resStr = strconv.FormatFloat(res, 'f', -1, 64)
 				}
-				output := "= " + resStr
-				fmt.Println(strings.Repeat(" ", width-utf8.RuneCountInString(output)-1), output)
+				output = "= " + resStr
 			}
+			bufferWidth := width - utf8.RuneCountInString(vtclean.Clean(output, false)) - 1
+			if bufferWidth < 0 {
+				bufferWidth = width - utf8.RuneCountInString(vtclean.Clean(output, false))%width - 1
+			}
+			fmt.Println(strings.Repeat(" ", bufferWidth), output)
+			fmt.Println(strings.Repeat("-", width))
 		}
-		fmt.Println(strings.Repeat("-", width))
 	}
 }

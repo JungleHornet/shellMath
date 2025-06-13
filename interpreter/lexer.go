@@ -21,18 +21,18 @@ func isValueToken(t token) bool {
 
 func tokenize(inptStrRaw string) ([]token, error) {
 	inptStr := strings.TrimSpace(inptStrRaw)
-	runes := []rune{}
+	var runes []rune
 	for len(inptStr) > 0 {
 		r, size := utf8.DecodeRuneInString(inptStr)
 		if r == utf8.RuneError {
 			if size == 1 {
-				return nil, errors.New("Invalid UTF-8 Encoding")
+				return nil, errors.New("error: invalid UTF-8 encoding")
 			}
 		}
 		inptStr = inptStr[size:]
 		runes = append(runes, r)
 	}
-	tokens := []token{}
+	var tokens []token
 
 	var valueStr string
 	for _, r := range runes {

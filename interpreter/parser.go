@@ -21,7 +21,7 @@ func buildParentheses(tokens []token) ([]token, []AST, error) {
 		return tokens, nil, errors.New("parentheses parsing error: unmatched parentheses")
 	}
 
-	parenPairs := [][]int{}
+	var parenPairs [][]int
 
 	lvl := 0
 	for i, t := range tokens {
@@ -43,7 +43,7 @@ func buildParentheses(tokens []token) ([]token, []AST, error) {
 		}
 	}
 
-	trees := []AST{}
+	var trees []AST
 
 	for _, p := range parenPairs {
 		tree, err := buildAST(tokens[p[0]+1 : p[1]])
@@ -69,7 +69,7 @@ func buildAST(tokens []token) (AST, error) {
 
 	var operatorIndices []int
 	for i, t := range tokens {
-		if isOperator(t.Type) {
+		if IsOperatorToken(t.Type) {
 			operatorIndices = append(operatorIndices, i)
 		}
 	}

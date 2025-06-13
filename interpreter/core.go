@@ -69,8 +69,16 @@ var operatorFuncs = map[tokenType]Operator{
 	},
 }
 
-func isOperator(t tokenType) bool {
+func IsOperatorToken(t tokenType) bool {
 	return slices.Contains(operators, t)
+}
+
+func IsOperatorRune(r rune) bool {
+	tType, ok := tokenMap[r]
+	if !ok {
+		return false
+	}
+	return slices.Contains(operators, tType)
 }
 
 type AST interface {
