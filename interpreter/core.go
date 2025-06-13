@@ -69,6 +69,12 @@ var operatorFuncs = map[tokenType]Operator{
 	},
 }
 
+var orderOfOperations = [][]tokenType{
+	{Exponent},
+	{Multiply, Divide},
+	{Add, Subtract},
+}
+
 func IsOperatorToken(t tokenType) bool {
 	return slices.Contains(operators, t)
 }

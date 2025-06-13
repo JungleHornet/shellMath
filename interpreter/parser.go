@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"errors"
+	"slices"
 )
 
 func countOccurrences[T comparable](slice []T, target T) int {
@@ -82,63 +83,54 @@ func buildAST(tokens []token) (AST, error) {
 		return ASTValue(tokens[0].Value), nil
 	}
 
-	current := parserStart
-	for i := 0; i < len(operatorIndices); i++ {
-		index := operatorIndices[i]
-		this := tokens[index]
-		if this.Type == current {
-			if i == len(operatorIndices)-1 {
-				operatorIndices = append(operatorIndices[:i])
-			} else {
-				operatorIndices = append(operatorIndices[:i], operatorIndices[i+1:]...)
-			} /* else if len(operatorIndices) == 2 {
-				operatorIndices = append(operatorIndices[:1])
-			} else if len(operatorIndices) == 1 {
-				operatorIndices = []int{}
-			}*/
+	for x := 0; x < len(orderOfOperations); x++ {
+		current := orderOfOperations[x]
+		for i := 0; i < len(operatorIndices); i++ {
+			index := operatorIndices[i]
+			this := tokens[index]
+			if slices.Contains(current, this.Type) {
+				if i == len(operatorIndices)-1 {
+					operatorIndices = append(operatorIndices[:i])
+				} else {
+					operatorIndices = append(operatorIndices[:i], operatorIndices[i+1:]...)
+				}
 
-			i--
-			var t1, t2 SubAST
+				i--
+				var t1, t2 SubAST
 
-			t := tokens[index-1]
-			if t.Type == Tree {
-				t1 = trees[int(t.Value)]
-			} else if t.Type == Value {
-				t1 = ASTValue(t.Value)
-			} else {
-				return nil, errors.New("operator parsing error: operator not acting on valid value")
-			}
-			t = tokens[index+1]
+				t := tokens[index-1]
+				if t.Type == Tree {
+					t1 = trees[int(t.Value)]
+				} else if t.Type == Value {
+					t1 = ASTValue(t.Value)
+				} else {
+					return nil, errors.New("operator parsing error: operator not acting on valid value")
+				}
+				t = tokens[index+1]
 
-			t = tokens[index+1]
-			if t.Type == Tree {
-				t2 = trees[int(t.Value)]
-			} else if t.Type == Value {
-				t2 = ASTValue(t.Value)
-			} else {
-				return nil, errors.New("operator parsing error: operator not acting on valid value")
-			}
-			t = tokens[index+1]
+				t = tokens[index+1]
+				if t.Type == Tree {
+					t2 = trees[int(t.Value)]
+				} else if t.Type == Value {
+					t2 = ASTValue(t.Value)
+				} else {
+					return nil, errors.New("operator parsing error: operator not acting on valid value")
+				}
+				t = tokens[index+1]
 
-			subtree := ASTBranch{function: operatorFuncs[current], t1: t1, t2: t2}
-			tokens = append(append(tokens[:index-1], token{Type: Tree, Value: float64(len(trees))}), tokens[index+2:]...)
-			trees = append(trees, subtree)
+				subtree := ASTBranch{function: operatorFuncs[this.Type], t1: t1, t2: t2}
+				tokens = append(append(tokens[:index-1], token{Type: Tree, Value: float64(len(trees))}), tokens[index+2:]...)
+				trees = append(trees, subtree)
 
-			for i, v := range operatorIndices {
-				if v >= index {
-					operatorIndices[i] = v - 2
+				for i, v := range operatorIndices {
+					if v >= index {
+						operatorIndices[i] = v - 2
+					}
 				}
 			}
-		}
 
-		if len(tokens) == 1 {
-			break
-		}
-
-		if i == len(operatorIndices)-1 {
-			if current != parserEnd {
-				current++
-				i = -1
+			if len(tokens) == 1 {
+				break
 			}
 		}
 	}

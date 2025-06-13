@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -19,8 +20,13 @@ func isValueToken(t token) bool {
 	return t.Type == Value || t.Type == CloseParen
 }
 
-func tokenize(inptStrRaw string) ([]token, error) {
-	inptStr := strings.TrimSpace(inptStrRaw)
+func tokenize(inptStr string) ([]token, error) {
+	inptStr = strings.Map(func(r rune) rune {
+		if !unicode.IsSpace(r) {
+			return r
+		}
+		return rune(-1)
+	}, inptStr)
 	var runes []rune
 	for len(inptStr) > 0 {
 		r, size := utf8.DecodeRuneInString(inptStr)

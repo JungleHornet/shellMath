@@ -56,7 +56,7 @@ func main() {
 	var ans float64
 	noAns := true
 	for scanner.Scan() {
-		line := scanner.Text()
+		line := strings.ToLower(scanner.Text())
 		if line == "q" {
 			quit(scanner)
 		} else {
