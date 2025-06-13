@@ -87,7 +87,7 @@ func buildAST(tokens []token) (AST, error) {
 		index := operatorIndices[i]
 		this := tokens[index]
 		if this.Type == current {
-			if index == len(operatorIndices) {
+			if i == len(operatorIndices)-1 {
 				operatorIndices = append(operatorIndices[:i])
 			} else {
 				operatorIndices = append(operatorIndices[:i], operatorIndices[i+1:]...)
