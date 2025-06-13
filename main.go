@@ -21,10 +21,8 @@ func quit(scanner *bufio.Scanner) {
 	switch strings.TrimSpace(strings.ToLower(scanner.Text())) {
 	case "y":
 		os.Exit(0)
-	case "n":
-		fmt.Print(strings.Repeat("\b", 50))
 	default:
-		fmt.Print(strings.Repeat("\b", 50))
+		return
 	}
 }
 
@@ -99,7 +97,7 @@ func main() {
 				bufferWidth = width - utf8.RuneCountInString(vtclean.Clean(output, false))%width - 1
 			}
 			fmt.Println(strings.Repeat(" ", bufferWidth), output)
-			fmt.Println(strings.Repeat("-", width))
 		}
+		fmt.Println(strings.Repeat("-", width))
 	}
 }
