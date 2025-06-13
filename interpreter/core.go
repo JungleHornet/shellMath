@@ -18,7 +18,6 @@ const (
 	Tree            // special tokentype representing an already constructed subtree during AST construction
 	OpenParen
 	CloseParen
-	Parentheses
 	Exponent
 	Multiply
 	Divide

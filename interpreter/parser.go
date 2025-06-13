@@ -61,6 +61,12 @@ func buildParentheses(tokens []token) ([]token, []AST, error) {
 
 func buildAST(tokens []token) (AST, error) {
 	var tree AST
+
+	tokens, trees, err := buildParentheses(tokens)
+	if err != nil {
+		return nil, err
+	}
+
 	var operatorIndices []int
 	for i, t := range tokens {
 		if isOperator(t.Type) {
@@ -76,23 +82,20 @@ func buildAST(tokens []token) (AST, error) {
 		return ASTValue(tokens[0].Value), nil
 	}
 
-	tokens, trees, err := buildParentheses(tokens)
-	if err != nil {
-		return nil, err
-	}
-
 	current := parserStart
 	for i := 0; i < len(operatorIndices); i++ {
 		index := operatorIndices[i]
 		this := tokens[index]
 		if this.Type == current {
-			if len(operatorIndices) > 2 {
-				operatorIndices = append(operatorIndices[:index], operatorIndices[index+1:]...)
-			} else if len(operatorIndices) == 2 {
+			if index == len(operatorIndices) {
+				operatorIndices = append(operatorIndices[:i])
+			} else {
+				operatorIndices = append(operatorIndices[:i], operatorIndices[i+1:]...)
+			} /* else if len(operatorIndices) == 2 {
 				operatorIndices = append(operatorIndices[:1])
 			} else if len(operatorIndices) == 1 {
 				operatorIndices = []int{}
-			}
+			}*/
 
 			i--
 			var t1, t2 SubAST
@@ -122,10 +125,14 @@ func buildAST(tokens []token) (AST, error) {
 			trees = append(trees, subtree)
 
 			for i, v := range operatorIndices {
-				if v > index {
+				if v >= index {
 					operatorIndices[i] = v - 2
 				}
 			}
+		}
+
+		if len(tokens) == 1 {
+			break
 		}
 
 		if i == len(operatorIndices)-1 {
