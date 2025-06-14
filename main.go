@@ -38,7 +38,7 @@ func main() {
 	}
 
 	title := "Welcome to shellMath! Enter \"q\" to quit."
-	paddingLen := float64(width - len(title))
+	paddingLen := float64(width - len(title)%width)
 	var paddingLeft, paddingRight string
 	if int(paddingLen)%2 != 0 {
 		paddingLeft = strings.Repeat(" ", int(paddingLen/2+0.5))
@@ -74,6 +74,8 @@ func main() {
 					ansErr = true
 				}
 			}
+
+			line = strings.Replace(line, "//", "÷", -1)
 			res, err := interpreter.Evaluate(line)
 			if err != nil || ansErr {
 				if !ansErr {

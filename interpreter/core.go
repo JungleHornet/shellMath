@@ -21,6 +21,8 @@ const (
 	Exponent
 	Multiply
 	Divide
+	Modulo
+	IntegerDivision
 	Add
 	Subtract
 )
@@ -31,20 +33,18 @@ var tokenMap = map[rune]tokenType{
 	'^': Exponent,
 	'*': Multiply,
 	'/': Divide,
+	'%': Modulo,
+	'÷': IntegerDivision,
 	'+': Add,
 	'-': Subtract,
 }
-
-// first token type to perform AST construction with (start of order of operations)
-const parserStart = Exponent
-
-// last token type to perform AST construction with (end of order of operations)
-const parserEnd = Subtract
 
 var operators = []tokenType{
 	Exponent,
 	Multiply,
 	Divide,
+	Modulo,
+	IntegerDivision,
 	Add,
 	Subtract,
 }
@@ -61,6 +61,12 @@ var operatorFuncs = map[tokenType]Operator{
 	Divide: func(num1, num2 float64) float64 {
 		return num1 / num2
 	},
+	Modulo: func(num1, num2 float64) float64 {
+		return math.Mod(num1, num2)
+	},
+	IntegerDivision: func(num1, num2 float64) float64 {
+		return (num1 - math.Mod(num1, num2)) / num2
+	},
 	Add: func(num1, num2 float64) float64 {
 		return num1 + num2
 	},
@@ -71,7 +77,7 @@ var operatorFuncs = map[tokenType]Operator{
 
 var orderOfOperations = [][]tokenType{
 	{Exponent},
-	{Multiply, Divide},
+	{Multiply, Divide, Modulo, IntegerDivision},
 	{Add, Subtract},
 }
 
