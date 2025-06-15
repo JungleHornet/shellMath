@@ -17,8 +17,14 @@ import (
 	"unicode/utf8"
 )
 
-func quit(t *tty.TTY) {
+func quit(t *tty.TTY, width int) {
 	prompt := "Are you sure you want to quit? (y/N) > "
+	promptLen := len(prompt)
+
+	if len(prompt) < width {
+		spaceLen := width - len(prompt)
+		prompt += strings.Repeat(" ", spaceLen) + strings.Repeat("\b", spaceLen)
+	}
 	fmt.Print(prompt)
 	inpt, _ := t.ReadRune()
 	switch strings.TrimSpace(strings.ToLower(string(inpt))) {
@@ -28,7 +34,7 @@ func quit(t *tty.TTY) {
 		returningText := "n | Returning to program..."
 		fmt.Print(returningText)
 		time.Sleep(1 * time.Second)
-		rep := len(prompt) + len(returningText)
+		rep := promptLen + len(returningText)
 		backspaces := strings.Repeat("\b", rep)
 		fmt.Print(backspaces + strings.Repeat(string(rune(127)), rep) + backspaces)
 		return
@@ -36,8 +42,11 @@ func quit(t *tty.TTY) {
 		invalidText := " | Invalid answer, continuing program."
 
 		fmt.Print(string(inpt) + invalidText)
+		if inpt == rune(13) {
+			promptLen = -1
+		}
 		time.Sleep(1 * time.Second)
-		rep := len(prompt) + 1 + len(invalidText)
+		rep := promptLen + 1 + len(invalidText)
 		backspaces := strings.Repeat("\b", rep)
 		fmt.Print(backspaces + strings.Repeat(string(rune(127)), rep) + backspaces)
 	}
@@ -142,7 +151,9 @@ func main() {
 
 		switch r {
 		case 'q':
-			quit(t)
+			fmt.Print(strings.Repeat("\b", cursor))
+			quit(t, width)
+			fmt.Print(line + strings.Repeat("\b", len(line)-cursor))
 		case 13:
 			fmt.Println()
 			cursor = 0
