@@ -4,15 +4,16 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/junglehornet/shellMath/interpreter"
-	"github.com/lunixbochs/vtclean"
-	"golang.org/x/term"
 	"math"
 	"os"
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/fatih/color"
+	"github.com/junglehornet/shellMath/interpreter"
+	"github.com/lunixbochs/vtclean"
+	"golang.org/x/term"
 )
 
 func quit(scanner *bufio.Scanner) {
@@ -29,7 +30,7 @@ func quit(scanner *bufio.Scanner) {
 func main() {
 	errText := color.New(color.FgRed).Add(color.Bold).SprintFunc()
 
-	width, _, err := term.GetSize(int(os.Stdin.Fd()))
+	width, _, err := term.GetSize(int(os.Stdout.Fd()))
 	if err != nil || width <= 0 {
 		fmt.Println(errors.New(errText("error getting terminal size: ")))
 		fmt.Println(errText(err))
@@ -58,8 +59,8 @@ func main() {
 		if line == "q" {
 			quit(scanner)
 		} else {
-			first, _ := utf8.DecodeRuneInString(line)
-			if interpreter.IsOperatorRune(first) {
+			firstType, _, _ := interpreter.DecodeTokenTypeInString(line)
+			if firstType != interpreter.Value && firstType != interpreter.OpenParen {
 				line = "ans" + line
 			}
 
@@ -75,7 +76,6 @@ func main() {
 				}
 			}
 
-			line = strings.Replace(line, "//", "÷", -1)
 			res, err := interpreter.Evaluate(line)
 			if err != nil || ansErr {
 				if !ansErr {

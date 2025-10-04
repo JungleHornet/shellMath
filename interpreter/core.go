@@ -1,21 +1,24 @@
 package interpreter
 
 import (
+	"fmt"
 	"math"
 	"slices"
 )
 
-type tokenType uint32
+type TokenType uint64
 
 type token struct {
-	Type  tokenType
+	Type  TokenType
 	Value float64
 }
 
 // order matters! lower values will be earlier in order of operations.
+
+const None TokenType = math.MaxUint64 // special TokenType representing a nil or non-existent token
 const (
-	Value tokenType = iota
-	Tree            // special tokentype representing an already constructed subtree during AST construction
+	Value TokenType = iota
+	Tree            // special TokenType representing an already constructed subtree during AST construction
 	OpenParen
 	CloseParen
 	Exponent
@@ -27,19 +30,33 @@ const (
 	Subtract
 )
 
-var tokenMap = map[rune]tokenType{
-	'(': OpenParen,
-	')': CloseParen,
-	'^': Exponent,
-	'*': Multiply,
-	'/': Divide,
-	'%': Modulo,
-	'÷': IntegerDivision,
-	'+': Add,
-	'-': Subtract,
+var tokenMap = map[string]TokenType{
+	"(":  OpenParen,
+	")":  CloseParen,
+	"^":  Exponent,
+	"*":  Multiply,
+	"/":  Divide,
+	"%":  Modulo,
+	"//": IntegerDivision,
+	"+":  Add,
+	"-":  Subtract,
 }
 
-var operators = []tokenType{
+var digitRunes = []rune{
+	'0',
+	'1',
+	'2',
+	'3',
+	'4',
+	'5',
+	'6',
+	'7',
+	'8',
+	'9',
+	'.',
+}
+
+var operators = []TokenType{
 	Exponent,
 	Multiply,
 	Divide,
@@ -51,7 +68,7 @@ var operators = []tokenType{
 
 type Operator func(num1, num2 float64) float64
 
-var operatorFuncs = map[tokenType]Operator{
+var operatorFuncs = map[TokenType]Operator{
 	Exponent: func(num1, num2 float64) float64 {
 		return math.Pow(num1, num2)
 	},
@@ -75,18 +92,18 @@ var operatorFuncs = map[tokenType]Operator{
 	},
 }
 
-var orderOfOperations = [][]tokenType{
+var orderOfOperations = [][]TokenType{
 	{Exponent},
 	{Multiply, Divide, Modulo, IntegerDivision},
 	{Add, Subtract},
 }
 
-func IsOperatorToken(t tokenType) bool {
+func IsOperatorToken(t TokenType) bool {
 	return slices.Contains(operators, t)
 }
 
-func IsOperatorRune(r rune) bool {
-	tType, ok := tokenMap[r]
+func IsOperatorString(s string) bool {
+	tType, ok := tokenMap[s]
 	if !ok {
 		return false
 	}
@@ -116,8 +133,20 @@ func (ast ASTBranch) evaluate() float64 {
 	return ast.function(ast.t1.evaluate(), ast.t2.evaluate())
 }
 
+var debug = false
+
 func Evaluate(equation string) (float64, error) {
+	if equation == "debug=true" {
+		debug = true
+		return 0, nil
+	} else if equation == "debug=false" {
+		debug = false
+		return 0, nil
+	}
 	tokens, err := tokenize(equation)
+	if debug {
+		fmt.Println(tokens)
+	}
 	if err != nil {
 		return 0, err
 	}
